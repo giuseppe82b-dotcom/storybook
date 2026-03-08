@@ -1,0 +1,13 @@
+Agisci come un illustratore professionista di libri per bambini. Ho diviso una storia in [NUMERO] capitoli e ho bisogno di una descrizione dettagliata (prompt) per generare un'immagine per ciascuno di essi.
+
+REGOLE DI STILE COERENTE:
+Tutte le immagini devono avere lo stesso stile visivo: [SCEGLI UNO: acquarello dolce / 3D stile Pixar / disegno a matita colorata / arte flat moderna].
+Il protagonista deve avere sempre le stesse caratteristiche (colore vestiti, capelli, ecc.) in ogni immagine.
+Le immagini devono essere in formato orizzontale (16:9).
+
+I CAPITOLI SONO:
+[INCOLLA QUI IL JSON GENERATO PRECEDENTEMENTE]
+
+IL TUO COMPITO:
+Per ogni capitolo del JSON, scrivi un "Prompt per Immagine" in inglese (le IA per immagini funzionano meglio in inglese) che descriva la scena, mantenendo lo stile scelto e la coerenza del personaggio.
+Presentami una lista numerata (1, 2, 3...) così saprò che l'immagine 1 corrisponde a 1.jpg, e così via.

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Storybook Maker con Export PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        :root { --primary: #4a90e2; --paper: #fffaf0; }
+        body { font-family: 'Segoe UI', serif; background: #dcdde1; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        
+        /* Dashboard Iniziale */
+        #setup-screen { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; max-width: 400px; width: 90%; }
+        .upload-group { margin-bottom: 20px; text-align: left; }
+        input[type="file"] { width: 100%; padding: 10px; border: 1px dashed #ccc; border-radius: 5px; margin-top: 5px; }
+        .start-btn { background: #27ae60; color: white; border: none; padding: 15px 30px; font-size: 1.1rem; border-radius: 30px; cursor: pointer; width: 100%; }
+
+        /* Schermata Libro */
+        #book-screen { display: none; width: 95%; max-width: 1100px; height: 85vh; background: white; box-shadow: 0 20px 40px rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden; }
+        .book-layout { display: flex; height: 100%; }
+        
+        .page-left { flex: 1; background: #f0f0f0; border-right: 2px solid rgba(0,0,0,0.05); }
+        .page-left img { width: 100%; height: 100%; object-fit: contain; background: #000; }
+        
+        .page-right { flex: 1; background: var(--paper); padding: 40px; display: flex; flex-direction: column; justify-content: space-between; overflow-y: auto; }
+        
+        .audio-btn { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-bottom: 20px; }
+        .pdf-btn { background: #8e44ad; color: white; border: none; padding: 12px; border-radius: 5px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; display: none; }
+
+        .nav-controls { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #ddd; padding-top: 20px; }
+        .btn-nav { background: #34495e; color: white; border: none; padding: 10px 25px; border-radius: 20px; cursor: pointer; }
+
+        @media (max-width: 850px) { .book-layout { flex-direction: column; } .page-left { height: 40%; } }
+    </style>
+</head>
+<body>
+
+<div id="setup-screen">
+    <h1 style="color: var(--primary)">📖 Storybook Maker</h1>
+    <div class="upload-group">
+        <label>1. Carica il file JSON:</label>
+        <input type="file" id="jsonInput" accept=".json">
+    </div>
+    <div class="upload-group">
+        <label>2. Seleziona tutte le immagini (1.jpg, 2.jpg...):</label>
+        <input type="file" id="imageInput" accept="image/*" multiple>
+    </div>
+    <button class="start-btn" onclick="startStory()">Inizia Lettura 🚀</button>
+</div>
+
+<div id="book-screen">
+    <div class="book-layout">
+        <div class="page-left"><img id="chapter-img" src=""></div>
+        <div class="page-right">
+            <div class="text-content">
+                <h2 id="chapter-title"></h2>
+                <button class="audio-btn" onclick="speakText()">🔊 Leggi Capitolo</button>
+                <p id="chapter-text"></p>
+                <button id="downloadPdfBtn" class="pdf-btn" onclick="generatePDF()">📥 Scarica Libro Completo (PDF)</button>
+            </div>
+            <div class="nav-controls">
+                <button id="prevBtn" class="btn-nav" onclick="changePage(-1)">Indietro</button>
+                <span id="page-info"></span>
+                <button id="nextBtn" class="btn-nav" onclick="changePage(1)">Avanti</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let storyData = [];
+    let imagesMap = {}; 
+    let currentIndex = 0;
+
+    async function startStory() {
+        const jsonFile = document.getElementById('jsonInput').files[0];
+        const imageFiles = document.getElementById('imageInput').files;
+        if (!jsonFile || imageFiles.length === 0) return alert("Carica i file necessari!");
+
+        storyData = JSON.parse(await jsonFile.text());
+        for (let file of imageFiles) {
+            // Salviamo sia l'URL per la visualizzazione che il file originale per il PDF
+            imagesMap[file.name] = {
+                url: URL.createObjectURL(file),
+                file: file
+            };
+        }
+
+        document.getElementById('setup-screen').style.display = 'none';
+        document.getElementById('book-screen').style.display = 'block';
+        renderPage();
+    }
+
+    function renderPage() {
+        const chapter = storyData[currentIndex];
+        const num = currentIndex + 1;
+        
+        document.getElementById('chapter-title').innerText = chapter.titolo;
+        document.getElementById('chapter-text').innerText = chapter.testo;
+        document.getElementById('page-info').innerText = `Pagina ${num} di ${storyData.length}`;
+
+        const imgEntry = imagesMap[`${num}.jpg`] || imagesMap[`${num}.png`];
+        document.getElementById('chapter-img').src = imgEntry ? imgEntry.url : "";
+
+        document.getElementById('prevBtn').disabled = currentIndex === 0;
+        document.getElementById('nextBtn').disabled = currentIndex === storyData.length - 1;
+
+        // Mostra il tasto PDF solo all'ultimo capitolo
+        document.getElementById('downloadPdfBtn').style.display = (currentIndex === storyData.length - 1) ? 'block' : 'none';
+        
+        window.speechSynthesis.cancel();
+    }
+
+    function changePage(step) { currentIndex += step; renderPage(); }
+
+    function speakText() {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(storyData[currentIndex].testo);
+        utterance.lang = 'it-IT';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // --- FUNZIONE GENERAZIONE PDF ---
+    async function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+        
+        for (let i = 0; i < storyData.length; i++) {
+            if (i > 0) doc.addPage();
+            
+            const chapter = storyData[i];
+            const imgEntry = imagesMap[`${i+1}.jpg`] || imagesMap[`${i+1}.png`];
+            
+            // Pagina Sinistra: Immagine
+            if (imgEntry) {
+                const imgData = await fileToDataURL(imgEntry.file);
+                doc.addImage(imgData, 'JPEG', 10, 20, 130, 160, null, 'FAST');
+            }
+
+            // Pagina Destra: Testo
+            doc.setFont("times", "bold");
+            doc.setFontSize(22);
+            doc.text(chapter.titolo, 150, 30);
+            
+            doc.setFont("times", "normal");
+            doc.setFontSize(14);
+            const splitText = doc.splitTextToSize(chapter.testo, 130);
+            doc.text(splitText, 150, 50);
+        }
+        
+        doc.save("il-mio-storybook.pdf");
+    }
+
+    function fileToDataURL(file) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(file);
+        });
+    }
+</script>
+</body>
+</html>

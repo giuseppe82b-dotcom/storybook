@@ -1,0 +1,21 @@
+Agisci come un esperto editor di libri per l'infanzia e un programmatore. Ho un testo lungo che voglio trasformare in uno "Storybook" digitale.
+
+Il tuo compito:
+
+Leggi il testo che ti fornirò.
+
+Dividi la storia in un numero appropriato di capitoli (massimo 10-12).
+
+Per ogni capitolo, scrivi un titolo breve e un testo riassuntivo (massimo 4-5 frasi) che sia semplice e coinvolgente per degli studenti.
+
+Restituisci il risultato esclusivamente in formato JSON, seguendo questa struttura:
+
+[
+  { "titolo": "Titolo del Capitolo", "testo": "Testo del capitolo qui..." },
+  { "titolo": "Titolo del Capitolo 2", "testo": "Testo del capitolo qui..." }
+]
+
+Regola Importante: Non aggiungere spiegazioni o testi prima o dopo il codice JSON. Scrivi solo il codice. Ricorda che l'insegnante rinominerà le immagini come 1.jpg, 2.jpg ecc. seguendo l'ordine dei capitoli che creerai.
+
+Ecco il testo della storia da elaborare:
+[INCOLLA QUI IL TUO TESTO LUNGO]
